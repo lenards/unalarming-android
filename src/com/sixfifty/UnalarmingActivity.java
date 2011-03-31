@@ -123,6 +123,7 @@ public class UnalarmingActivity extends Activity {
         audioMgr.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
     	
 		Intent intent = new Intent(UnalarmingActivity.this, OnetimeAlarmReceiver.class);
+		intent.putExtra("ringerMode", previousRingerMode);
 		Log.i(TAG, "intent: " + intent.toString());
 		PendingIntent pendingIntent = PendingIntent.getBroadcast(UnalarmingActivity.this, REQUEST_CODE, intent, 0);
 		Log.i(TAG, "pending-intent: " + pendingIntent.toString());
@@ -178,14 +179,14 @@ public class UnalarmingActivity extends Activity {
 		> 3rd Pass 
 			* Add background picture
 			** http://www.flickr.com/photos/rossap/4540965708/
-			* Add simple launcher icon 
-		> 4th Pass
+			* Add simple launcher icon
+			* make photo silent when alarm set
+			** have phone return to off silent mode if it wasn't set before 
+		> 4th Pass?
 			* provide user-prefs activity?
 			* find default menu/prefs icons
-			* make photo silent when alarm set
-			** have phone return to off silent mode if it wasn't set before
 			* provide info menu on the background photo 
-		> 5th Pass
+		> 5th Pass?
 			* redesign the launcher icon
 			* rotation several pictures: 
 			* http://www.flickr.com/photos/hyougushi/61769775/
@@ -194,12 +195,11 @@ public class UnalarmingActivity extends Activity {
 			* http://www.flickr.com/photos/sebastiantiger/3038525954/
 			* http://www.flickr.com/photos/sofafort/246731874/
 			* http://www.flickr.com/photos/jpellgen/3611094608/
-		> Later
+		> Later?
 			* have zen-bell ring as alarm? 
 			* have zen-bell ring on start? 
 			* Allow user to set duration/pattern of vibration
 			** How do persist this?  (as a preference with a tokenize string for pattern spec)
-
      */
     
     /*
