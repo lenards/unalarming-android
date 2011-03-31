@@ -1,0 +1,10 @@
+# ignore eclipse-related files
+.classpath
+.project
+# ignore the build files and generated resources
+bin
+gen
+# along with any Android specific files
+*.dex
+*.apk
+*.ap_

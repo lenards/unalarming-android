@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/ryoanji_bell_med427x640"
+    >
+   	<RelativeLayout 
+    	android:id="@+id/pnl_inner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" >
+    
+	<Button
+		android:id="@+id/btn_set_alarm"
+ 		android:layout_width="fill_parent"
+ 		android:layout_height="wrap_content"
+ 		android:text="@string/set_alarm"
+ 		/>
+	<Button
+		android:id="@+id/btn_set_alarm_duration"
+ 		android:layout_width="fill_parent"
+ 		android:layout_height="wrap_content"
+ 		android:layout_below="@id/btn_set_alarm"
+ 		android:text="@string/set_alarm_duration"
+ 		/>
+ 	</RelativeLayout>	 		
+</RelativeLayout>

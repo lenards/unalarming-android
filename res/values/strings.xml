@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="set_alarm">Set alarm (by exact time)</string>
+    <string name="set_alarm_duration">Set alarm (by duration)</string>
+    <string name="app_name">Unalarming</string>
+</resources>
