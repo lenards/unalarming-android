@@ -82,6 +82,7 @@ public class UnalarmingActivity extends Activity {
         
         audioMgr = (AudioManager) getSystemService(AUDIO_SERVICE);
         // determine current ringer mode setting
+        Log.i(TAG, "initial-ringer-mode:" + audioMgr.getRingerMode());
         previousRingerMode = audioMgr.getRingerMode();
         
         // grab the set-alarm button and attach listener 
@@ -121,7 +122,7 @@ public class UnalarmingActivity extends Activity {
     private void scheduleAlarm() {	
         // this should be how we turn off the ringer during meditation
         audioMgr.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-    	
+    	Log.i(TAG, "ringer-mode: " + audioMgr.getRingerMode());
 		Intent intent = new Intent(UnalarmingActivity.this, OnetimeAlarmReceiver.class);
 		intent.putExtra("ringerMode", previousRingerMode);
 		Log.i(TAG, "intent: " + intent.toString());
