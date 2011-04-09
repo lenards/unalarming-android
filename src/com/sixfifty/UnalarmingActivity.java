@@ -157,44 +157,4 @@ public class UnalarmingActivity extends Activity {
 		alarmMgr.set(AlarmManager.RTC_WAKEUP, alarm.getTimeInMillis(), pendingIntent);
 		Toast.makeText(UnalarmingActivity.this, msg, Toast.LENGTH_SHORT).show();    	
     }
-
-
-
-    
-    /*
-     * Project Management in Comments!!!!!
-		> 1st Pass
-			* provide UI to set alarm for set-period (25 minutes)
-			* write handler to set alarm
-			* notify alarm set UI 
-		> 2nd Pass
-			* enable user to enter time-period (minutes from now)
-			* make handler use time-period set by user - not default
-		> 3rd Pass 
-			* Add background picture
-			** http://www.flickr.com/photos/rossap/4540965708/
-			* Add simple launcher icon
-			* make photo silent when alarm set
-			** have phone return to off silent mode if it wasn't set before 
-		> 4th Pass?
-			* phone state handler to divert calls
-			* twitter/oauth for announcing meditation sit time
-			* provide user-prefs activity?
-			* find default menu/prefs icons
-			* provide info menu on the background photo 
-		> 5th Pass?
-			* redesign the launcher icon
-			* rotation several pictures: 
-			* http://www.flickr.com/photos/hyougushi/61769775/
-			* http://www.flickr.com/photos/kuckibaboo/121543162/
-			* http://www.flickr.com/photos/caseyyee/4278883548/
-			* http://www.flickr.com/photos/sebastiantiger/3038525954/
-			* http://www.flickr.com/photos/sofafort/246731874/
-			* http://www.flickr.com/photos/jpellgen/3611094608/
-		> Later?
-			* have zen-bell ring as alarm? 
-			* have zen-bell ring on start? 
-			* Allow user to set duration/pattern of vibration
-			** How do persist this?  (as a preference with a tokenize string for pattern spec)
-     */
 }
