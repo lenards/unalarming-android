@@ -9,13 +9,10 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -23,16 +20,31 @@ import android.widget.Button;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+/**
+ * Central user interface activity for the application.
+ * 
+ * @author lenards
+ *
+ */
 public class UnalarmingActivity extends Activity {
 	private static final String TAG = UnalarmingActivity.class.getSimpleName();
 	private static final SimpleDateFormat FORMAT = new SimpleDateFormat("h:mm a z");
-	private Calendar calendar = Calendar.getInstance();
 	
+	/**
+	 * Request code constant for pending intent of alarm receiver
+	 */
 	protected static final int REQUEST_CODE = 0;
 	
+	/**
+	 * Internal identifier for the TimePicker Dialog
+	 */
 	private static final int TIME_DIALOG_ID = 0;
+	/**
+	 * Internal identifier for the MinutesSelector Dialog
+	 */
 	private static final int MINUTES_DIALOG_ID = 1;
 	
+	private Calendar calendar = Calendar.getInstance();
 	private AlarmManager alarmMgr;
 	private AudioManager audioMgr;
 	private int hourOfDay;
@@ -138,34 +150,15 @@ public class UnalarmingActivity extends Activity {
 		Log.i(TAG, "alarm-set: " + alarm.getTimeInMillis());
 		Log.i(TAG, "system-time: " + System.currentTimeMillis());
 		
-		int hourDelta = elapsed(now, alarm, Calendar.HOUR_OF_DAY);
-		int minDelta = elapsed(now, alarm, Calendar.MINUTE);
+		int hourDelta = TimeHelper.elapsed(now, alarm, Calendar.HOUR_OF_DAY);
+		int minDelta = TimeHelper.elapsed(now, alarm, Calendar.MINUTE);
 		String msg = String.format("Alarm set for %d hours and %d minutes from now: %s.  Enjoy!", 
 				hourDelta, minDelta, FORMAT.format(alarm.getTime()));
 		alarmMgr.set(AlarmManager.RTC_WAKEUP, alarm.getTimeInMillis(), pendingIntent);
 		Toast.makeText(UnalarmingActivity.this, msg, Toast.LENGTH_SHORT).show();    	
     }
 
-    /**
-     * Computes the elapsed time between two time-periods. 
-     * 
-     * @author BalusC - http://stackoverflow.com/users/157882/balusc
-     * @see http://stackoverflow.com/questions/567659/calculate-elapsed-time-in-java-groovy
-     * 
-     * @param before the time prior to after
-     * @param after the time following before
-     * @param field the field of the Calendar (YEAR, DATE, MINUTE, HOUR_OF_DAY)
-     * @return integer representing the time difference for the field
-     */
-    private static int elapsed(Calendar before, Calendar after, int field) {
-        Calendar clone = (Calendar) before.clone(); // Otherwise changes are been reflected.
-        int elapsed = -1;
-        while (!clone.after(after)) {
-            clone.add(field, 1);
-            elapsed++;
-        }
-        return elapsed;
-    }
+
 
     
     /*
@@ -184,6 +177,8 @@ public class UnalarmingActivity extends Activity {
 			* make photo silent when alarm set
 			** have phone return to off silent mode if it wasn't set before 
 		> 4th Pass?
+			* phone state handler to divert calls
+			* twitter/oauth for announcing meditation sit time
 			* provide user-prefs activity?
 			* find default menu/prefs icons
 			* provide info menu on the background photo 
@@ -201,16 +196,5 @@ public class UnalarmingActivity extends Activity {
 			* have zen-bell ring on start? 
 			* Allow user to set duration/pattern of vibration
 			** How do persist this?  (as a preference with a tokenize string for pattern spec)
-     */
-    
-    /*
-     * When we decide to vibrate, this is what the code will look like: 
-     * 
-     * // Start immediately
-     * // Vibrate for 200 milliseconds
-     * // Sleep for 500 milliseconds
-     * long[] pattern = { 0, 200, 500 };
-     * 
-     * v.vibrate(pattern, -1);
      */
 }
