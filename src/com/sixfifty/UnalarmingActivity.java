@@ -38,6 +38,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -59,6 +60,7 @@ import android.widget.Toast;
  */
 public class UnalarmingActivity extends Activity {
 	private static final String TAG = UnalarmingActivity.class.getSimpleName();
+	private static final String ALARM_ACTION = "com.sixfifty.actions.ALARM_RECEIVED";
 	private static final SimpleDateFormat FORMAT = new SimpleDateFormat(
 			"h:mm a z");
 
@@ -75,15 +77,22 @@ public class UnalarmingActivity extends Activity {
 	 * Internal identifier for the MinutesSelector Dialog
 	 */
 	private static final int MINUTES_DIALOG_ID = 1;
+	private static final int MISSED_CALLS_DIALOG_ID = 2;
 
 	private Calendar calendar;
 	private AlarmManager alarmMgr;
 	private AudioManager audioMgr;
+	private IntentFilter alarmIntentFilter;
 	private int hourOfDay;
 	private int minOfDay;
 	private int previousRingerMode = -1;
 	private boolean missedCalls;
 
+	/**
+	 * Receiver for alarm intent that ends meditation period.
+	 */
+	private BroadcastReceiver onetimeAlarm = null;
+	
 	/**
 	 * Receiver for decline calls during meditation period. 
 	 */ 	// null used as a flag for showing an 'active' receiver in the activity.
@@ -157,6 +166,7 @@ public class UnalarmingActivity extends Activity {
 	private void initializeFields() {
 		missedCalls = false;
 		calendar = Calendar.getInstance();
+		alarmIntentFilter = new IntentFilter(ALARM_ACTION);
 		alarmMgr = (AlarmManager) getSystemService(ALARM_SERVICE);
 		audioMgr = (AudioManager) getSystemService(AUDIO_SERVICE);
 
@@ -185,6 +195,30 @@ public class UnalarmingActivity extends Activity {
 				showDialog(MINUTES_DIALOG_ID);
 			}
 		});
+		SharedPreferences sPrefs = getSharedPreferences("Foo", MODE_WORLD_READABLE);
+		sPrefs.registerOnSharedPreferenceChangeListener(new OnSharedPreferenceChangeListener() {
+			
+			@Override
+			public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+					String key) {
+				if (key.equals("ALARM")) {
+					unregisterReceiver(declineCalls);
+					Log.i(TAG, "Whoa!");
+					int calls = sharedPreferences.getInt("CALLS", 0);
+					if (calls > 0) {
+						/*
+						 * ... actually - we call onCreateDialog with the right 
+						 * ID for this dialog... 
+						 * 
+						 * We'll want to show a dialog that asks if they want to 
+						 * see the calls they missed... and it will need to take 
+						 * them to their "missed calls" list
+						 */		
+						showDialog(MISSED_CALLS_DIALOG_ID);
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -197,8 +231,10 @@ public class UnalarmingActivity extends Activity {
 			unregisterReceiver(declineCalls);
 			// ensure that the receiver reference is nullified. 
 			declineCalls = null;
+			// should onetimeAlarm be unregistered? BroadcastReceiver is 
+			// such that it is probably dead and eligible for GC. 
 		}
-		// we did our work, not let the base class destory.
+		// we did our work, not let the base class destroy.
 		super.onDestroy();
 	}
 	
@@ -216,11 +252,33 @@ public class UnalarmingActivity extends Activity {
 			return new TimePickerDialog(this, timeSetListener, hourOfDay,
 					minOfDay, false);
 		case MINUTES_DIALOG_ID:
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setTitle("Select duration (in minutes)");
-			builder.setSingleChoiceItems(minuteValues, -1,
+			AlertDialog.Builder minutes = new AlertDialog.Builder(this);
+			minutes.setTitle("Select duration (in minutes)");
+			minutes.setSingleChoiceItems(minuteValues, -1,
 					minutesSelectedListener);
-			return builder.create();
+			return minutes.create();
+		case MISSED_CALLS_DIALOG_ID:
+			AlertDialog.Builder missedcalls = new AlertDialog.Builder(this);
+			missedcalls.setMessage("You missed a call. Do you want to see the call log?")
+			       .setCancelable(false)
+			       .setPositiveButton("Sure!", new DialogInterface.OnClickListener() {
+			           public void onClick(DialogInterface dialog, int id) {
+							/* That dialog do this if they want to see the calls... */
+//							Intent i = new Intent();
+//							i.setAction(Intent.ACTION_VIEW);
+//							i.setData(android.provider.Contacts.People.CONTENT_URI);
+//							i.setType("vnd.android.cursor.dir/calls");
+//							startActivity(i);
+			        	   	UnalarmingActivity.this.finish();
+			           }
+			       })
+			       .setNegativeButton("Nah", new DialogInterface.OnClickListener() {
+			           public void onClick(DialogInterface dialog, int id) {
+			                dialog.cancel();
+			                UnalarmingActivity.this.finish();
+			           }
+			       });
+			return missedcalls.create();
 		default:
 			return null;
 		}
@@ -235,10 +293,7 @@ public class UnalarmingActivity extends Activity {
 		audioMgr.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
 
 		Log.i(TAG, "ringer-mode: " + audioMgr.getRingerMode());
-
-		Intent intent = new Intent(UnalarmingActivity.this,
-				UnalarmingActivity.class);
-		intent.putExtra("ringerMode", previousRingerMode);
+		Intent intent = createAlarmAction();
 
 		Log.i(TAG, "intent: " + intent.toString());
 
@@ -269,6 +324,13 @@ public class UnalarmingActivity extends Activity {
 		Toast.makeText(UnalarmingActivity.this, msg, Toast.LENGTH_SHORT).show();
 	}
 
+	private Intent createAlarmAction() {
+		Intent intent = new Intent(ALARM_ACTION);
+		intent.setClass(UnalarmingActivity.this, OnetimeAlarmReceiver.class);
+		intent.putExtra("ringerMode", previousRingerMode);
+		return intent;
+	}
+
 	/**
 	 * Registers broadcast receiver for handling incoming phone calls. 
 	 * 
@@ -277,7 +339,8 @@ public class UnalarmingActivity extends Activity {
 	private void registerReceiver() {
         declineCalls = new DeclineCallsReceiver();
         registerReceiver(declineCalls, new IntentFilter("android.intent.action.PHONE_STATE"));
-        OnetimeAlarmReceiver onetime = new OnetimeAlarmReceiver(this);
+        onetimeAlarm = new OnetimeAlarmReceiver();
+        registerReceiver(onetimeAlarm, alarmIntentFilter);
 	}
 
 	/**
@@ -307,18 +370,13 @@ public class UnalarmingActivity extends Activity {
 	 * @author lenards
 	 *
 	 */
-	public class OnetimeAlarmReceiver extends BroadcastReceiver {
-		private static final String TAG = "OnetimeAlarmReceiver";
+	public static class OnetimeAlarmReceiver extends BroadcastReceiver {
+		private static final String TAG = OnetimeAlarmReceiver.class.getSimpleName();
 		
 		public static final int DO_NOT_REPEAT = -1;
 		
 		private Vibrator vib;
-		private Context ctxt; 
-		
-		public OnetimeAlarmReceiver(Context ctxt) {
-			this.ctxt = ctxt;
-		}
-		
+
 		/**
 		 * Handles receiving a "one-time" alarm event. 
 		 * 
@@ -331,31 +389,14 @@ public class UnalarmingActivity extends Activity {
 			
 			restoreRingerModeToPreviousState(ctxt, intent);		
 	        fireVibrationEvent(ctxt);
-	        determineCallsMissed(ctxt);
-	        
-	        Intent i = new Intent(ctxt, UnalarmingActivity.class);
-	        i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-	        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-	        i.putExtra("alarmFired", true);
-	        ctxt.startActivity(i);
+	        signalAlarmFired(ctxt);
 		}
 
-		private void determineCallsMissed(Context ctxt) {
-			/*
-			 * ... actually - we call onCreateDialog with the right 
-			 * ID for this dialog... 
-			 * 
-			 * We'll want to show a dialog that asks if they want to 
-			 * see the calls they missed... and it will need to take 
-			 * them to their "missed calls" list
-			 */
-			/*
-				Intent i = new Intent();
-		        i.setAction(Intent.ACTION_VIEW);
-		        i.setData(android.provider.Contacts.People.CONTENT_URI);
-		        i.setType("vnd.android.cursor.dir/calls");
-		        startActivity(i); 
-			 */
+		private void signalAlarmFired(Context ctxt) {
+			SharedPreferences sPrefs = ctxt.getSharedPreferences("Foo", MODE_WORLD_WRITEABLE);
+			SharedPreferences.Editor editor = sPrefs.edit();
+			editor.putBoolean("ALARM", true);
+			editor.commit();
 		}
 
 		/**
@@ -412,11 +453,19 @@ public class UnalarmingActivity extends Activity {
 			if (!phone_state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
 				try {
 					declinePhoneCall(ctxt);
-					
+					markCallReceived(ctxt);
 				} catch (Exception e) {
 					Log.e(TAG, "ERROR: " + e.getMessage());
 				}
 			}
+		}
+
+		private void markCallReceived(Context ctxt) {
+			SharedPreferences sPrefs = ctxt.getSharedPreferences("Foo", MODE_WORLD_WRITEABLE);
+			SharedPreferences.Editor editor = sPrefs.edit();
+			int calls = sPrefs.getInt("CALLS", 0);
+			editor.putInt("CALLS", ++calls);
+			editor.commit();
 		}
 		
 		/**

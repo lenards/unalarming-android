@@ -15,7 +15,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-		<receiver android:name="UnalarmingActivity$OnetimeAlarmReceiver" />
+		<receiver android:name="UnalarmingActivity$OnetimeAlarmReceiver">
+			<intent-filter>
+				<action android:name="com.sixfifty.actions.ALARM_RECEIVED" />
+			</intent-filter>
+		</receiver>
 		<receiver android:name="UnalarmingActivity$DeclineCallsReceiver" />
     </application>
 </manifest> 
