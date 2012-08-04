@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="set_alarm">Set alarm (by exact time)</string>
-    <string name="set_alarm_duration">Set alarm (by duration)</string>
+    <string name="set_alarm">by exact time</string>
+    <string name="set_alarm_duration">by duration</string>
     <string name="title">Unalarming - The Gentle Meditation Alarm</string>
     <string name="app_name">Unalarming</string>
     <!-- these are not quite what you think they are -->
     <string name="missed_calls">missedCalls</string>
     <string name="alarm_fired">alarmFired</string>
+    <string name="set_alarm_text"> Set alarm:</string>
 </resources>

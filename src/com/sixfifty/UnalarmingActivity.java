@@ -40,6 +40,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.Preference;
@@ -82,6 +84,7 @@ public class UnalarmingActivity extends Activity {
 	private Calendar calendar;
 	private AlarmManager alarmMgr;
 	private AudioManager audioMgr;
+	private MediaPlayer mPlayer; 
 	private IntentFilter alarmIntentFilter;
 	private int hourOfDay;
 	private int minOfDay;
@@ -144,12 +147,24 @@ public class UnalarmingActivity extends Activity {
 
 		setActivityAttributes();
 		initializeFields();
+		initializeMediaPlayer();
 		wireupListeners();
+		
 		if (savedInstanceState != null && savedInstanceState.getBoolean("alarmFired")) {
 			Log.i(TAG, "Clean-up");
 			Log.i(TAG, "Is declineCalls null? " + (declineCalls == null));
 			unregisterReceiver(declineCalls);
 		}
+	}
+
+	private void initializeMediaPlayer() {
+		mPlayer = MediaPlayer.create(UnalarmingActivity.this, R.raw.mbell);
+		mPlayer.setOnCompletionListener(new OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer mp) {
+				mp.release();
+			}
+		});
 	}
 
 	/**
@@ -202,7 +217,7 @@ public class UnalarmingActivity extends Activity {
 			public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
 					String key) {
 				if (key.equals("ALARM")) {
-					unregisterReceiver(declineCalls);
+					//unregisterReceiver(declineCalls);
 					Log.i(TAG, "Whoa!");
 					int calls = sharedPreferences.getInt("CALLS", 0);
 					if (calls > 0) {
@@ -228,7 +243,7 @@ public class UnalarmingActivity extends Activity {
 	protected void onDestroy() {
 		if (declineCalls != null) {
 			Log.i(TAG, "Unregister broadcast receivers...");
-			unregisterReceiver(declineCalls);
+			//unregisterReceiver(declineCalls);
 			// ensure that the receiver reference is nullified. 
 			declineCalls = null;
 			// should onetimeAlarm be unregistered? BroadcastReceiver is 
@@ -322,6 +337,8 @@ public class UnalarmingActivity extends Activity {
 		alarmMgr.set(AlarmManager.RTC_WAKEUP, alarm.getTimeInMillis(),
 				pendingIntent);
 		Toast.makeText(UnalarmingActivity.this, msg, Toast.LENGTH_SHORT).show();
+		// add guard based on Prefs
+		mPlayer.start();
 	}
 
 	private Intent createAlarmAction() {
@@ -337,8 +354,8 @@ public class UnalarmingActivity extends Activity {
 	 * Incoming phone calls will be declined during the meditation period.
 	 */
 	private void registerReceiver() {
-        declineCalls = new DeclineCallsReceiver();
-        registerReceiver(declineCalls, new IntentFilter("android.intent.action.PHONE_STATE"));
+        //declineCalls = new DeclineCallsReceiver();
+        //registerReceiver(declineCalls, new IntentFilter("android.intent.action.PHONE_STATE"));
         onetimeAlarm = new OnetimeAlarmReceiver();
         registerReceiver(onetimeAlarm, alarmIntentFilter);
 	}
@@ -404,12 +421,28 @@ public class UnalarmingActivity extends Activity {
 		 * 
 		 * @param ctxt The Activity's context.
 		 */
-		private void fireVibrationEvent(Context ctxt) {
+		private void fireVibrationEvent(final Context ctxt) {
 			// Get instance of Vibrator from current Context
 	        vib = (Vibrator) ctxt.getSystemService(Context.VIBRATOR_SERVICE);
-	    	long[] pattern = { 0, 160, 350, 160, 250 };
+	    	long[] pattern = { 0, 190, 350, 190, 350, 190, 350, 190 };
 	    	vib.vibrate(pattern, DO_NOT_REPEAT);
 	    	Toast.makeText(ctxt, "Meditation period over...", Toast.LENGTH_LONG).show();
+	    	MediaPlayer bell = MediaPlayer.create(ctxt, R.raw.mbell);
+	    	bell.setOnCompletionListener(new OnCompletionListener() {
+				@Override
+				public void onCompletion(MediaPlayer mp) {
+					MediaPlayer tmp = MediaPlayer.create(ctxt, R.raw.mbell);
+					tmp.setOnCompletionListener(new OnCompletionListener() {
+						@Override
+						public void onCompletion(MediaPlayer mp) {
+							mp.release();
+						}
+					});
+					tmp.start();
+					mp.release();
+				}
+			});
+	    	bell.start();
 		}
 
 		/**
