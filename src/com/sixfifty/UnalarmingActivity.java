@@ -84,7 +84,6 @@ public class UnalarmingActivity extends Activity {
 	private Calendar calendar;
 	private AlarmManager alarmMgr;
 	private AudioManager audioMgr;
-	private MediaPlayer mPlayer; 
 	private IntentFilter alarmIntentFilter;
 	private int hourOfDay;
 	private int minOfDay;
@@ -147,7 +146,6 @@ public class UnalarmingActivity extends Activity {
 
 		setActivityAttributes();
 		initializeFields();
-		initializeMediaPlayer();
 		wireupListeners();
 		
 		if (savedInstanceState != null && savedInstanceState.getBoolean("alarmFired")) {
@@ -157,14 +155,15 @@ public class UnalarmingActivity extends Activity {
 		}
 	}
 
-	private void initializeMediaPlayer() {
-		mPlayer = MediaPlayer.create(UnalarmingActivity.this, R.raw.mbell);
+	private void playMeditationBell() {
+		MediaPlayer mPlayer = MediaPlayer.create(UnalarmingActivity.this, R.raw.mbell);
 		mPlayer.setOnCompletionListener(new OnCompletionListener() {
 			@Override
 			public void onCompletion(MediaPlayer mp) {
 				mp.release();
 			}
 		});
+		mPlayer.start();
 	}
 
 	/**
@@ -338,7 +337,7 @@ public class UnalarmingActivity extends Activity {
 				pendingIntent);
 		Toast.makeText(UnalarmingActivity.this, msg, Toast.LENGTH_SHORT).show();
 		// add guard based on Prefs
-		mPlayer.start();
+		playMeditationBell();
 	}
 
 	private Intent createAlarmAction() {
